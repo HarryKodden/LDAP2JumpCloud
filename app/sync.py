@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 """
 LDAP synchronisation script. It takes a configuration file, from
-which it reads necessary values for a source and destination LDAP. These
+which it reads necessary values for a source LDAP. These
 values include: url, basedn, binddn and bind password.
 
-Optionally the configuration file clould also lists the necessary info
-for synchronization with JumpCloud. However, this is currently a temporallily
-solution and is expected to be replaced in the future.
+The configuration file clould also lists the necessary info
+for synchronization with JumpCloud.
+
+The script sill synchronise from LDAP to JumpClound of People and Group memberhips from
+a given subtree of the source LDAP.
 """
 
 import sys
