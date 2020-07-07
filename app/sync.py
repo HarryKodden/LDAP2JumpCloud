@@ -100,33 +100,12 @@ def dn2rdns(dn):
         rdns.setdefault(a, []).append(v)
     return rdns
 
-
-def get_collaborations(ldap_connection, filter="*"):
-    """Return all collaborations from the supplied 'ldap_connection'."""
-    r = ldap_connection.find(
-        None,
-        filter,
-        None,
-        ldap.SCOPE_ONELEVEL
-    )
-
-    cos = {}
-
-    for dn, attributes in r.items():
-        print('CO Attributes:', attributes)
-        
-        co_id = dn2rdns(dn)['o'][0]
-        cos[co_id] = attributes
-
-    return cos
-
-def get_people(ldap_connection, co):
+def get_people(ldap_connection):
     """
-    Given the 'ldap_connection' and 'co', return all people
-    for that CO.
+    Given the 'ldap_connection', return all people
     """
     r = ldap_connection.rfind(
-        f'ou=People,o={co}',
+        f'ou=People',
         "(&(ObjectClass=person)(uid=*))",
         None,
         ldap.SCOPE_ONELEVEL
@@ -135,7 +114,7 @@ def get_people(ldap_connection, co):
     uids = {}
 
     for attributes in r.values():
-        print('User Attributes:', attributes)
+        show('User Attributes:', attributes)
 
         uid = attributes['uid'][0]
         uids[uid] = attributes
@@ -143,34 +122,32 @@ def get_people(ldap_connection, co):
     return uids
 
 
-def sync_cos(src_ldap, src_cos):
+def sync(src_ldap):
 
-    for co, attributes in src_cos.items():
-        src_people = get_people(src_ldap, co)
+    src_people = get_people(src_ldap)
 
-        for uid in src_people:
-            jumpcloud.person(**src_people[uid])
+    for uid in src_people:
+        jumpcloud.person(**src_people[uid])
 
-        group_dns = src_ldap.rfind(
-            f'ou=Groups,o={co}',
-            'ObjectClass=posixGroup',
-            ['cn', 'sczMember']
-        )
+    group_dns = src_ldap.rfind(
+        f'ou=Groups',
+        'ObjectClass=posixGroup',
+        ['cn', 'sczMember']
+    )
 
-        for dn, attributes in group_dns.items():
-            print('Group Attributes:', attributes)
-        
-            group = dn2rdns(dn)['cn'][0]
+    for dn, attributes in group_dns.items():
+        show('Group Attributes:', attributes)
+    
+        group = dn2rdns(dn)['cn'][0]
 
-            members = []
-            if 'sczMember' in attributes:
-                for i in attributes['sczMember']:
-                    rdns = dn2rdns(i)
-                    if 'uid' in  rdns:
-                        members.append(rdns['uid'][0])
+        members = []
+        if 'sczMember' in attributes:
+            for i in attributes['sczMember']:
+                rdns = dn2rdns(i)
+                if 'uid' in  rdns:
+                    members.append(rdns['uid'][0])
 
-                jumpcloud.group(group, members)
-
+            jumpcloud.group(group, members)
 
 if __name__ == "__main__":
 
@@ -181,9 +158,7 @@ if __name__ == "__main__":
         
         jumpcloud = init_jumpcloud(config)
 
-        src_cos = get_collaborations(src_ldap, filter="(&(objectClass=organization)(o=kodden_test:cokodden))")
-
-        sync_cos(src_ldap, src_cos)
+        sync(src_ldap)
 
         jumpcloud.cleanup()
 
