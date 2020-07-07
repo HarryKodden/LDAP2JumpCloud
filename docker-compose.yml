@@ -1,0 +1,46 @@
+version: "2.0"
+
+# Author: harry.kodden@surfnet.nl
+#
+# Start LDAP first:
+#
+#   $ docker-compose up -d ldap
+#
+# Optionally start LDAPphpAdmin:
+#
+#   $ docker-compose up -d ldapadmin
+#
+# Periodically (cron !) start synchronisation script:
+#
+#  $ docker-compose up app
+
+services:
+
+  app:
+    build: .
+    volumes:
+      - "${PWD}/app:/app"
+    environment:
+      - LDAP_URI=${ENV_LDAP_HOST}
+      - LDAP_BASEDN=${ENV_LDAP_BASE}
+      - LDAP_BINDDN=${ENV_LDAP_BIND}
+      - LDAP_PASSWD=${ENV_LDAP_PASS}
+      - API_URL=${ENV_API_URL}
+      - API_KEY=${ENV_API_KEY}
+    command:
+      - /bin/sh
+      - -c
+      - |
+        cat > /tmp/config.yml <<- EOF
+        ---
+          ldap:
+            uri: $${LDAP_URI}
+            basedn: $${LDAP_BASEDN}
+            binddn: $${LDAP_BINDDN}
+            passwd: $${LDAP_PASSWD}
+          api:
+            key: $${API_KEY}
+            url: $${API_URL}
+        EOF
+        #python sync.py /tmp/config.yml
+        tail -f /dev/null
