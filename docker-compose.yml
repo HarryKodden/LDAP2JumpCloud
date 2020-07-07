@@ -1,19 +1,5 @@
 version: "2.0"
 
-# Author: harry.kodden@surfnet.nl
-#
-# Start LDAP first:
-#
-#   $ docker-compose up -d ldap
-#
-# Optionally start LDAPphpAdmin:
-#
-#   $ docker-compose up -d ldapadmin
-#
-# Periodically (cron !) start synchronisation script:
-#
-#  $ docker-compose up app
-
 services:
 
   app:
