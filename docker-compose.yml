@@ -28,5 +28,4 @@ services:
             key: $${API_KEY}
             url: $${API_URL}
         EOF
-        #python sync.py /tmp/config.yml
-        tail -f /dev/null
+        python sync.py /tmp/config.yml
