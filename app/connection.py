@@ -1,7 +1,6 @@
 import ldap
 import ldap.modlist
 
-
 class Connection(object):
 
     # LDAP connection, private

@@ -21,8 +21,6 @@ from jumpcloud import JumpCloud
 
 import json
 
-global jumpcloud
-
 def show(label, data):
     print(label)
     print(json.dumps(data, indent=4, sort_keys=True))
@@ -100,11 +98,11 @@ def dn2rdns(dn):
         rdns.setdefault(a, []).append(v)
     return rdns
 
-def get_people(ldap_connection):
+def get_people(src):
     """
     Given the 'ldap_connection', return all people
     """
-    r = ldap_connection.rfind(
+    r = src.rfind(
         f'ou=People',
         "(&(ObjectClass=person)(uid=*))",
         None,
@@ -122,14 +120,14 @@ def get_people(ldap_connection):
     return uids
 
 
-def sync(src_ldap):
+def sync(src, dst):
 
-    src_people = get_people(src_ldap)
+    src_people = get_people(src)
 
     for uid in src_people:
-        jumpcloud.person(**src_people[uid])
+        dst.person(**src_people[uid])
 
-    group_dns = src_ldap.rfind(
+    group_dns = src.rfind(
         f'ou=Groups',
         'ObjectClass=posixGroup',
         ['cn', 'sczMember']
@@ -147,20 +145,20 @@ def sync(src_ldap):
                 if 'uid' in  rdns:
                     members.append(rdns['uid'][0])
 
-            jumpcloud.group(group, members)
+            dst.group(group, members)
 
 if __name__ == "__main__":
 
     config, config_filename = read_config_file()
 
     try:
-        src_ldap = Connection(get_value_from_config(config, 'ldap'), 'SRAM services')
+        src = Connection(get_value_from_config(config, 'ldap'), 'SRAM services')
         
-        jumpcloud = init_jumpcloud(config)
+        dst = init_jumpcloud(config)
 
-        sync(src_ldap)
+        sync(src, dst)
 
-        jumpcloud.cleanup()
+        dst.cleanup()
 
     except ConfigItemNotFound as e:
         print(f'Config error: key \'{e.config_item}\' does not exist in config file {config_filename}.')
